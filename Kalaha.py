@@ -40,7 +40,7 @@ class KalahaGame:
 
         curr = idx
         while marbles > 0:
-            # move to the next pit
+            # move to the next pit - going around the board
             curr = (curr + 1) % 14
 
             # Skip opponent's store
@@ -95,7 +95,7 @@ class KalahaGame:
                 # Change prompt to 0-5
                 self.display_board() # Show the board before asking for input
                 move = int(input(f"Player {self.player}(human), choose a pit (0-5): "))
-                
+
                 if not (0 <= move <= 5):
                     print("Invalid choice!")
                     continue
