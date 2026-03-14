@@ -9,30 +9,33 @@ class AI:
         self.max_depth = max_depth
 
     def choose_action(self, state):
-        # IMPORTANT note - this function goes depth first in the tree search. 
+        # IMPORTANT note - this function goes depth first in the tree search.
         legal = self.game.legal_actions(state)
         best_action = legal[0]
+        alpha, beta = -inf, inf 
 
         if state.current_player == self.player:
             best_value = -inf
             for action in legal:
                 child = self.game.result(state, action)
-                value = self.minimax(child, self.max_depth - 1)
+                value = self.minimax(child, self.max_depth - 1, alpha, beta)
                 if value > best_value:
                     best_value = value
                     best_action = action
+                alpha = max(alpha, best_value)
         else:
             best_value = inf
             for action in legal:
                 child = self.game.result(state, action)
-                value = self.minimax(child, self.max_depth - 1)
+                value = self.minimax(child, self.max_depth - 1, alpha, beta)
                 if value < best_value:
                     best_value = value
                     best_action = action
+                beta = min(beta, best_value)
 
         return best_action
 
-    def minimax(self, state, depth):
+    def minimax(self, state, depth, alpha, beta):
         if depth == 0 or self.game.is_terminal(state):
             return self.evaluate(state)
 
@@ -42,13 +45,19 @@ class AI:
             value = -inf
             for action in legal:
                 child = self.game.result(state, action)
-                value = max(value, self.minimax(child, depth - 1))
+                value = max(value, self.minimax(child, depth - 1, alpha, beta))
+                alpha = max(alpha, value)
+                if beta <= alpha:   # Minimiser would never choose this branch.
+                    break           # Beta cut-off.
             return value
         else:
             value = inf
             for action in legal:
                 child = self.game.result(state, action)
-                value = min(value, self.minimax(child, depth - 1))
+                value = min(value, self.minimax(child, depth - 1, alpha, beta))
+                beta = min(beta, value)
+                if beta <= alpha:   # Maximiser would never choose this branch.
+                    break           # Alpha cut-off.
             return value
 
     def evaluate(self, state):
