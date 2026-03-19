@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+import random
 
 P1 = 1
 P2 = 2
@@ -17,7 +17,8 @@ class Kalaha:
 
     def initial_state(self):
         board = [self.stones_per_pit] * 6 + [0] + [self.stones_per_pit] * 6 + [0]
-        return GameState(tuple(board), P1)
+        first = random.choice([P1, P2])
+        return GameState(tuple(board), first)
 
     def legal_actions(self, state):
         board = state.board

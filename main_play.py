@@ -8,10 +8,10 @@ class KalahaGame:
     AI player    = P2 (top row)
     """
 
-    def __init__(self, stones_per_pit=6, max_depth=6):
+    def __init__(self, stones_per_pit=6, max_depth=6,flag = True):
         self.game = Kalaha(stones_per_pit=stones_per_pit)
         self.state = self.game.initial_state()
-        self.ai = AI(self.game, player=P2, max_depth=max_depth)
+        self.ai = AI(self.game, player=P2, max_depth=max_depth, flag = flag)
 
     def play(self):
         while not self.game.is_terminal(self.state):
@@ -81,5 +81,6 @@ class KalahaGame:
 
 
 if __name__ == "__main__":
-    game = KalahaGame(stones_per_pit=6, max_depth=6)
+    # flag = True => use alpha beta prunning and flag = False => normal search tree with max depth.
+    game = KalahaGame(stones_per_pit=6, max_depth=6, flag = True)
     game.play()
