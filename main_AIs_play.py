@@ -1,19 +1,19 @@
 import time
 import random
 from game_engine import Kalaha, P1, P2
-from ai_mult_player_mult_eval import AI
-
+#from ai_mult_player_mult_eval import AI
+from ai_mult_player_mult_eval_Tlim import AI, TimeLimit
 
 class KalahaAIMatch:
     def __init__(self, stones_per_pit=6, depth_p1=6, depth_p2=6,
-                 flag_p1=True, flag_p2=False, eval_p1=None, eval_p2=None):
+                 flag_p1=True, flag_p2=False, eval_p1=None, eval_p2=None, Tlim=0.5):
         self.game = Kalaha(stones_per_pit=stones_per_pit)
         self.state = self.game.initial_state()
 
         self.ai1 = AI(self.game, player=P1, max_depth=depth_p1,
-                      flag=flag_p1, name="AI-1", eval_fn=eval_p1)
+                      flag=flag_p1, name="AI-1", eval_fn=eval_p1, Tlim=Tlim)
         self.ai2 = AI(self.game, player=P2, max_depth=depth_p2,
-                      flag=flag_p2, name="AI-2", eval_fn=eval_p2)
+                      flag=flag_p2, name="AI-2", eval_fn=eval_p2, Tlim=Tlim)
 
         self.move_times = {P1: [], P2: []}
         self.move_count = 0
@@ -29,7 +29,7 @@ class KalahaAIMatch:
         print(f"P1:    {p1_side}")
         print("-" * 28)
 
-    def play(self, show_board=True):
+    def play(self, show_board=True, Tlim=0.5):
         self.ai1.reset_metrics()
         self.ai2.reset_metrics()
 
@@ -43,7 +43,7 @@ class KalahaAIMatch:
                 ai = self.ai2
 
             t0 = time.perf_counter()
-            action = ai.choose_action(self.state)
+            action = ai.choose_action(self.state, time_limit = Tlim)
             t1 = time.perf_counter()
 
             self.move_times[self.state.current_player].append(t1 - t0)
@@ -128,7 +128,8 @@ def print_metrics(metrics):
 def run_experiment(num_games=10, stones_per_pit=6,
                    depth_p1=6, depth_p2=6,
                    flag_p1=True, flag_p2=False,
-                   eval_p1=None, eval_p2=None):
+                   eval_p1=None, eval_p2=None,
+                   Tlim = 0.5):
     results = {
         "p1_wins": 0,
         "p2_wins": 0,
@@ -151,9 +152,10 @@ def run_experiment(num_games=10, stones_per_pit=6,
             flag_p1=flag_p1,
             flag_p2=flag_p2,
             eval_p1=eval_p1,
-            eval_p2=eval_p2
+            eval_p2=eval_p2,
+            Tlim=Tlim
         )
-        metrics = match.play(show_board=False)
+        metrics = match.play(show_board=False, Tlim = Tlim)
 
         if metrics["winner"] == P1:
             results["p1_wins"] += 1
@@ -192,20 +194,20 @@ def eval_store_heavy(state, ai):
 
     if ai.player == P1:
         own_store, opp_store = 6, 13
-        own_side = board[0:6]
-        opp_side = board[7:13]
+        #own_side = board[0:6]
+        #opp_side = board[7:13]
     else:
         own_store, opp_store = 13, 6
-        own_side = board[7:13]
-        opp_side = board[0:6]
+        #own_side = board[7:13]
+        #opp_side = board[0:6]
 
     store_diff = board[own_store] - board[opp_store]
-    side_diff = - sum(own_side) + sum(opp_side)
-
-    return 1 * store_diff + 0 * side_diff
+    
+    return store_diff
 
 
 def eval_side_heavy(state, ai):
+    M = 12 * ai.game.stones_per_pit
     board = state.board
 
     if ai.game.is_terminal(state):
@@ -223,9 +225,19 @@ def eval_side_heavy(state, ai):
     store_diff = board[own_store] - board[opp_store]
     side_diff = - sum(own_side) + sum(opp_side)
 
-    return 5 * store_diff + 1 * side_diff
+    #linear
+    w1 = M #testing for 1
+    w2 = M / (M + 1 - (own_store + opp_store)) # +1 so we don't devide by 0
+
+    #exponential
+    #progress = 1 - ((M - own_store - opp_store) / M)
+    #w1 = 5
+    #w2 = 0.1 + 2.5 * (progress ** 2)
+
+    return w1 * store_diff + w2 * side_diff
 
 def eval_extra_turns(state, ai):
+    M = 12 * ai.game.stones_per_pit
     board = state.board
 
     if ai.game.is_terminal(state):
@@ -256,21 +268,83 @@ def eval_extra_turns(state, ai):
         if stones == distance_to_store:
             extra_turn_pits += 1
 
-    return 3 * store_diff + side_diff + 5 * extra_turn_pits
+    #w1 = M #testing for 1
+    #w2 = M / (M + 1 - (own_store + opp_store)) # +1 so we don't devide by 0
+    #w3 = M
+
+    # non-linear
+    progress = 1 - ((M - own_store - opp_store) / M)
+    w1 = 1
+    w2 = 0.1 + 2.5 * (progress ** 2)
+    w3 = 5
+
+    return w1 * store_diff + w2 * side_diff + w3 * extra_turn_pits
+
+def eval_extra_turns_13pit(state, ai):
+    M = 12 * ai.game.stones_per_pit
+    board = state.board
+
+    if ai.game.is_terminal(state):
+        return ai.game.utility(state, ai.player)
+
+    if ai.player == P1:
+        own_store, opp_store = 6, 13
+        own_side = board[0:6]
+        opp_side = board[7:13]
+    else:
+        own_store, opp_store = 13, 6
+        own_side = board[7:13]
+        opp_side = board[0:6]
+
+    store_diff = board[own_store] - board[opp_store]
+    side_diff = - sum(own_side) + sum(opp_side)
+
+    extra_turn_pits = 0
+    pit_with_13 = 0
+    for action in ai.game.legal_actions(state):
+        if ai.player == P1:
+            stones = board[action]
+            distance_to_store = 6 - action
+        else:
+            pit_idx = 7 + action
+            stones = board[pit_idx]
+            distance_to_store = 13 - pit_idx
+
+        if stones == distance_to_store:
+            extra_turn_pits += 1
+        
+        if stones == 13:
+            pit_with_13 += 1
+
+    #w1 = M #testing for 1
+    #w2 = M / (M + 1 - (own_store + opp_store)) # +1 so we don't devide by 0
+    #w3 = M
+
+    # non-linear
+    progress = 1 - ((M - own_store - opp_store) / M)
+    w1 = 1
+    w2 = 0.1 + 2.5 * (progress ** 2)
+    w3 = 5
+    w4 = 7
+
+    return w1 * store_diff + w2 * side_diff + w3 * extra_turn_pits + w4 * pit_with_13
 
 
 if __name__ == "__main__":
 
     # true is using alpha beta prunning
     # false is normal search tree
-    ws1 = (1,0)
-    ws2 = (5,1)
-    detph = 4
+    detph = 10
+    Tlim = 0.1
     depth1, flag1, eval1 = detph, True, eval_store_heavy
-    depth2, flag2, eval2 = detph, True, eval_side_heavy
+    #depth2, flag2, eval2 = detph, True, eval_side_heavy
+    #depth2, flag2, eval2 = detph, True, eval_extra_turns
+    depth2, flag2, eval2 = detph, True, eval_extra_turns_13pit
 
-    print("First player using method: ", flag1, " with search depth: ", depth1, "with eval func: ", eval1.__name__, "and w's: ", ws1)
-    print("Second player using method: ", flag2, " with search depth: ", depth2, "with eval func: ", eval2.__name__, "and w's: ", ws2)
+    print("using timelit pr. choose action (s): ", Tlim)
+    print("Using (w1,exp growth rate,w3,w4)=(1,0,5,7)")
+    print("First player using method: ", flag1, " with search depth: ", depth1, "with eval func: ", eval1.__name__)
+    print("Second player using method: ", flag2, " with search depth: ", depth2, "with eval func: ", eval2.__name__)
 
     run_experiment(
         num_games=50,
@@ -280,5 +354,6 @@ if __name__ == "__main__":
         flag_p1=flag1, 
         flag_p2=flag2,
         eval_p1=eval1,
-        eval_p2=eval2
+        eval_p2=eval2,
+        Tlim = Tlim
     )

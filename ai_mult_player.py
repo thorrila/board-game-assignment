@@ -1,7 +1,6 @@
 from math import inf
 from game_engine import P1, P2
 
-
 class AI:
     def __init__(self, game, player, max_depth=6, flag=True, name="AI"):
         self.game = game
