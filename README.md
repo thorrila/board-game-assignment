@@ -68,6 +68,8 @@ This mode supports:
 - Alpha-Beta on/off for each side,
 - custom evaluation functions,
 - aggregate experiment statistics across many games.
+- time limit per move (Tlim)
+- number of games in the experiment
 
 Note that the starting player is chosen randomly in `game_engine.py` as to not have bias.
 
@@ -86,10 +88,10 @@ The experiment runner can report:
 ## Evaluation Functions
 
 `main_AIs_play.py` includes several example heuristics:
-
 - `eval_store_heavy` — favors stones already secured in the store
 - `eval_side_heavy` — balances store advantage and side control
 - `eval_extra_turns` — rewards positions that create extra-turn opportunities
+- `eval_13pit` - rewards positions with pits having 13 marbles, as this activate the capture rule.
 
 One could define new evaluation function with the same signature:
 

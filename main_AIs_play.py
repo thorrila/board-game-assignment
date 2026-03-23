@@ -245,42 +245,85 @@ def eval_extra_turns(state, ai):
 
     if ai.player == P1:
         own_store, opp_store = 6, 13
-        own_side = board[0:6]
-        opp_side = board[7:13]
     else:
         own_store, opp_store = 13, 6
-        own_side = board[7:13]
-        opp_side = board[0:6]
 
     store_diff = board[own_store] - board[opp_store]
-    side_diff = - sum(own_side) + sum(opp_side)
+    own_extra_turn_pits = 0
+    opp_extra_turn_pits = 0
 
-    extra_turn_pits = 0
-    for action in ai.game.legal_actions(state):
+    for action in range(6):
         if ai.player == P1:
-            stones = board[action]
-            distance_to_store = 6 - action
+            own_pit_idx = action
+            own_stones = board[own_pit_idx]
+            own_distance_to_store = 6 - own_pit_idx
+            opp_pit_idx = 7 + action
+            opp_stones = board[opp_pit_idx]
+            opp_distance_to_store = 13 - opp_pit_idx
         else:
-            pit_idx = 7 + action
-            stones = board[pit_idx]
-            distance_to_store = 13 - pit_idx
+            own_pit_idx = 7 + action
+            own_stones = board[own_pit_idx]
+            own_distance_to_store = 13 - own_pit_idx
+            opp_pit_idx = action
+            opp_stones = board[opp_pit_idx]
+            opp_distance_to_store = 6 - opp_pit_idx
 
-        if stones == distance_to_store:
-            extra_turn_pits += 1
+        if own_stones == own_distance_to_store:
+            own_extra_turn_pits += 1
+        if opp_stones == opp_distance_to_store:
+            opp_extra_turn_pits += 1
 
     #w1 = M #testing for 1
     #w2 = M / (M + 1 - (own_store + opp_store)) # +1 so we don't devide by 0
     #w3 = M
 
     # non-linear
-    progress = 1 - ((M - own_store - opp_store) / M)
-    w1 = 1
-    w2 = 0.1 + 2.5 * (progress ** 2)
-    w3 = 5
+    norm_stones_left = (M - own_store - opp_store) / M
+    w1 = 1+4*(1-norm_stones_left)
+    w3 = 8*norm_stones_left
 
-    return w1 * store_diff + w2 * side_diff + w3 * extra_turn_pits
+    return w1 * store_diff + w3 * (own_extra_turn_pits - opp_extra_turn_pits)
 
-def eval_extra_turns_13pit(state, ai):
+def eval_13pit(state, ai):
+    M = 12 * ai.game.stones_per_pit
+    board = state.board
+
+    if ai.game.is_terminal(state):
+        return ai.game.utility(state, ai.player)
+
+    if ai.player == P1:
+        own_store, opp_store = 6, 13
+    else:
+        own_store, opp_store = 13, 6
+
+    store_diff = board[own_store] - board[opp_store]
+
+    own_pit_with_13 = 0
+    opp_pit_with_13 = 0
+
+    for action in range(6):
+        if ai.player == P1:
+            own_pit_idx = action
+            own_stones = board[own_pit_idx]
+            opp_pit_idx = 7 + action
+            opp_stones = board[opp_pit_idx]
+        else:
+            own_pit_idx = 7 + action
+            own_stones = board[own_pit_idx]
+            opp_pit_idx = action
+            opp_stones = board[opp_pit_idx]
+
+        if own_stones == 13:
+            own_pit_with_13 += 1
+        if opp_stones == 13:
+            opp_pit_with_13 += 1
+
+
+    stones_left = M - (board[own_store] + board[opp_store])
+    norm_left = stones_left/M
+    return (1+4*(1-norm_left))*store_diff + 8*norm_left*(own_pit_with_13 - opp_pit_with_13)
+
+def eval_dynamic(state, ai):
     M = 12 * ai.game.stones_per_pit
     board = state.board
 
@@ -299,55 +342,61 @@ def eval_extra_turns_13pit(state, ai):
     store_diff = board[own_store] - board[opp_store]
     side_diff = - sum(own_side) + sum(opp_side)
 
-    extra_turn_pits = 0
-    pit_with_13 = 0
-    for action in ai.game.legal_actions(state):
+    stones_left = M - (board[own_store] + board[opp_store])
+
+    own_extra_turn_pits = 0
+    own_pit_with_13 = 0
+    opp_extra_turn_pits = 0
+    opp_pit_with_13 = 0
+
+    for action in range(6):
         if ai.player == P1:
-            stones = board[action]
-            distance_to_store = 6 - action
+            own_pit_idx = action
+            own_stones = board[own_pit_idx]
+            own_distance_to_store = 6 - own_pit_idx
+            opp_pit_idx = 7 + action
+            opp_stones = board[opp_pit_idx]
+            opp_distance_to_store = 13 - opp_pit_idx
         else:
-            pit_idx = 7 + action
-            stones = board[pit_idx]
-            distance_to_store = 13 - pit_idx
+            own_pit_idx = 7 + action
+            own_stones = board[own_pit_idx]
+            own_distance_to_store = 13 - own_pit_idx
+            opp_pit_idx = action
+            opp_stones = board[opp_pit_idx]
+            opp_distance_to_store = 6 - opp_pit_idx
 
-        if stones == distance_to_store:
-            extra_turn_pits += 1
-        
-        if stones == 13:
-            pit_with_13 += 1
+        if own_stones == own_distance_to_store:
+            own_extra_turn_pits += 1
+        if opp_stones == opp_distance_to_store:
+            opp_extra_turn_pits += 1
+        if own_stones == 13:
+            own_pit_with_13 += 1
+        if opp_stones == 13:
+            opp_pit_with_13 += 1
 
-    #w1 = M #testing for 1
-    #w2 = M / (M + 1 - (own_store + opp_store)) # +1 so we don't devide by 0
-    #w3 = M
-
-    # non-linear
-    progress = 1 - ((M - own_store - opp_store) / M)
-    w1 = 1
-    w2 = 0.1 + 2.5 * (progress ** 2)
-    w3 = 5
-    w4 = 7
-
-    return w1 * store_diff + w2 * side_diff + w3 * extra_turn_pits + w4 * pit_with_13
+    norm_left = stones_left/M
+    return (1+4*(1-norm_left))*store_diff +5*norm_left*(own_extra_turn_pits - opp_extra_turn_pits) + 8*norm_left*(own_pit_with_13 - opp_pit_with_13)
 
 
 if __name__ == "__main__":
 
     # true is using alpha beta prunning
     # false is normal search tree
-    detph = 10
+    depth = 50
     Tlim = 0.1
-    depth1, flag1, eval1 = detph, True, eval_store_heavy
-    #depth2, flag2, eval2 = detph, True, eval_side_heavy
-    #depth2, flag2, eval2 = detph, True, eval_extra_turns
-    depth2, flag2, eval2 = detph, True, eval_extra_turns_13pit
+    depth1, flag1, eval1 = depth, True, eval_store_heavy
+    depth2, flag2, eval2 = depth, True, eval_side_heavy
+    #depth2, flag2, eval2 = depth, True, eval_dynamic
+    #depth2, flag2, eval2 = depth, True, eval_extra_turns
+    #depth2, flag2, eval2 = depth, True, eval_13pit
 
     print("using timelit pr. choose action (s): ", Tlim)
-    print("Using (w1,exp growth rate,w3,w4)=(1,0,5,7)")
+    #print("Using (w1,exp growth rate,w3,w4)=(1,0,5,7)")
     print("First player using method: ", flag1, " with search depth: ", depth1, "with eval func: ", eval1.__name__)
     print("Second player using method: ", flag2, " with search depth: ", depth2, "with eval func: ", eval2.__name__)
 
     run_experiment(
-        num_games=50,
+        num_games=1000,
         stones_per_pit=6,
         depth_p1=depth1,
         depth_p2=depth2,
