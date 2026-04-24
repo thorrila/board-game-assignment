@@ -1,7 +1,5 @@
 # get tree structure : placeholder
 
-
-
 class Sentence:
     """ Starting from the leafs/literals and up the tree, convert each node to CNF. """
     def __init__(self, op, args):
