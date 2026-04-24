@@ -97,7 +97,7 @@ class Sentence:
 
     def to_cnf(self):
         # DEBUGGING:
-        print(f"Transforming: {self.op}") # print the operations starting from the innermost brackets and moving outward
+        #print(f"Transforming: {self.op}") # print the operations starting from the innermost brackets and moving outward
 
         # We ensure every branch below us is already simplified.
         processed_args = []
@@ -279,7 +279,7 @@ if __name__ == "__main__":
     print(tree3.root.args[1].op)  # AND
     print(tree3.root.args[1].args, "\n")  # ['C', 'D']
 """
-
+"""
 if __name__ == "__main__":
     # Test a complex case: ~(A => (B | C))
     complex_s = "~(A => (B | C))"
@@ -291,3 +291,4 @@ if __name__ == "__main__":
     # This should output: AND(A, AND(NOT(B), NOT(C))) 
     # (after De Morgan's and Double Negation)
     print(f"Final CNF: {cnf_result}")
+"""
