@@ -130,6 +130,42 @@ class Sentence:
 
         # If it's an AND or a literal, we just return the current state
         return current
+    
+    def get_clauses(self):
+        """
+        Converts the CNF tree into a list of CLAUSES (sets)
+        Example: AND(OR(A, B), NOT(C)) -> [{'A', 'B'}, {'NOT(C)'}]
+        """
+        # Ensure the tree is in CNF
+        cnf_tree = self.to_cnf()
+        
+        # Handle the different possible root operators of a CNF tree
+        if cnf_tree.op == "AND":
+            # The children of an AND are clauses (either OR nodes or Literals)
+            clauses = []
+            for arg in cnf_tree.args:
+                clauses.append(self._extract_literals(arg))
+            return clauses
+        else:
+            # If the root isn't AND, the whole tree is just one single clause
+            return [self._extract_literals(cnf_tree)]
+
+    def _extract_literals(self, node):
+        """Helper to collect literals from an OR node or a single Literal."""
+        # set() to avoid duplicates or ordering issues
+        literals = set()
+        
+        if isinstance(node, str):
+            literals.add(node) # Node is already a literal 'A'
+        elif node.op == "NOT":
+            # Is also a literal 'NOT(A)'
+            literals.add(f"NOT({node.args[0]})")
+        elif node.op == "OR":
+            # Recursive case: collect from both sides of the OR
+            for arg in node.args:
+                literals.update(self._extract_literals(arg))
+        
+        return literals
 
     def _handle_iff(self):
         # IFF(A, B) becomes AND(IF(A, B), IF(B, A))
@@ -205,6 +241,8 @@ class Sentence:
             return Sentence("AND", distributed_args)
 
         return self
+    
+
 
 
 class SentenceTree:
