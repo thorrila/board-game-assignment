@@ -60,9 +60,10 @@ def parse(tokens):
         t = tokens[i]
 
         if t.isalpha():
-            values.append(t)
+            values.append(t) 
 
         elif t in OPS:
+            # pop operators from the stack while they have higher or equal precedence than the current operator
             while (
                 ops and ops[-1] in OPS and
                 OPS[ops[-1]][1] >= OPS[t][1]
@@ -70,10 +71,11 @@ def parse(tokens):
                 apply_op()
             ops.append(t)
 
-        elif t == '(':
+        elif t == '(': 
             ops.append(t)
 
-        elif t == ')':
+        elif t == ')': 
+            # pop operators from the stack until we find a left parenthesis
             while ops[-1] != '(':
                 apply_op()
             ops.pop()
