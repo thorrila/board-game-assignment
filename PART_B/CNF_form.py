@@ -1,4 +1,5 @@
 # get tree structure : placeholder
+from logics import SentenceTree
 
 class Sentence:
     """ Starting from the leafs/literals and up the tree, convert each node to CNF. """
