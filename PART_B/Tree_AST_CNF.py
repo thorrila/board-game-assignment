@@ -213,32 +213,6 @@ class SentenceTree:
         self.root = parse(tokenize(string))
 
 """
-class AND:
-    def __init__(self, *args):
-        self.args = args
-        self.op = "AND"
-
-class OR:
-    def __init__(self, *args):
-        self.args = args
-        self.op = "OR"
-
-class NOT:
-    def __init__(self, *args):
-        self.args = args
-        self.op = "NOT"
-
-class IF:
-    def __init__(self, *args):
-        self.args = args
-        self.op = "IF"
-
-class IFF:
-    def __init__(self, *args):
-        self.args = args
-        self.op = "IFF"
-
-
 if __name__ == "__main__":
     s1 = "A & B => C"
     tree = SentenceTree(s1)
