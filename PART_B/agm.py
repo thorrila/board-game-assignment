@@ -26,17 +26,17 @@ def subset(kb1, kb2):
     return True
 
 
-def is_tautology(phi):
-    """phi is a tautology if an empty KB entails it.
+def is_valid(phi):
+    """phi is valid if an empty KB entails it.
     Used to test extensionality."""
     empty_kb = KB()
     return empty_kb.entails(phi)
 
 
 def iff(phi, psi):
-    """phi and psi are iff if (phi <=> psi) is a tautology."""
+    """phi and psi are iff if (phi <=> psi) is valid."""
     iff_formula = Sentence("IFF", [phi, psi])
-    return is_tautology(iff_formula)
+    return is_valid(iff_formula)
 
 
 def negate(phi):
@@ -47,8 +47,8 @@ def negate(phi):
 
 # 1
 def success_contraction(kb, phi):
-    """The outcome does not contain phi (unless phi is a tautology)."""
-    if is_tautology(phi):
+    """The outcome does not contain phi (unless phi is valid)."""
+    if is_valid(phi):
         return True
     contracted = kb.contraction(phi)
     if not contracted.entails(phi):
@@ -158,8 +158,8 @@ def vacuity_revision(kb, phi):
 # 4
 def consistency_revision(kb, phi):
     """B * phi is consistent if phi is consistent (i.e., not a contradiction)."""
-    # phi is consistent iff NOT(phi) is not a tautology
-    if is_tautology(negate(phi)):
+    # phi is consistent iff NOT(phi) is not valid
+    if is_valid(negate(phi)):
         # phi itself is a contradiction — no consistency required
         print("consistency postulate satisfied (precondition not met)")
         return True
@@ -255,6 +255,59 @@ if __name__ == "__main__":
     run_postulates(kb4, SentenceTree("~Q").root, SentenceTree("~(Q | Q)").root)
 
 
+        # Test 5: Adversarial extensionality - De Morgan
     print("\n" + "=" * 60)
-    print("ALL TESTS COMPLETE")
+    print("TEST 5: De Morgan extensionality, phi = ~(A & B), psi = ~A | ~B")
+    print("(phi and psi are logically equivalent but syntactically different)")
     print("=" * 60)
+    kb5 = KB()
+    kb5.add(SentenceTree("A").root, priority=5)
+    kb5.add(SentenceTree("B").root, priority=5)
+    run_postulates(kb5, SentenceTree("~(A & B)").root, SentenceTree("~A | ~B").root)
+
+
+    # Test 6: Material implication extensionality
+    print("\n" + "=" * 60)
+    print("TEST 6: Material implication extensionality, phi = A => B, psi = ~A | B")
+    print("=" * 60)
+    kb6 = KB()
+    kb6.add(SentenceTree("A").root, priority=5)
+    kb6.add(SentenceTree("A => B").root, priority=3)
+    run_postulates(kb6, SentenceTree("A => B").root, SentenceTree("~A | B").root)
+
+
+    # Test 7: Revision by a formula that conflicts with low-priority belief
+    print("\n" + "=" * 60)
+    print("TEST 7: Priority gradient revision, phi = ~B")
+    print("(High-priority A should survive, low-priority B should be displaced)")
+    print("=" * 60)
+    kb7 = KB()
+    kb7.add(SentenceTree("A").root, priority=10)
+    kb7.add(SentenceTree("B").root, priority=1)
+    run_postulates(kb7, SentenceTree("~B").root)
+
+
+    # Test 8: Disjunctive input where neither disjunct is in KB
+    print("\n" + "=" * 60)
+    print("TEST 8: Disjunctive input, phi = A | B")
+    print("(KB contains ~A and ~B, so revising by A | B forces a real change)")
+    print("=" * 60)
+    kb8 = KB()
+    kb8.add(SentenceTree("~A").root, priority=3)
+    kb8.add(SentenceTree("~B").root, priority=3)
+    run_postulates(kb8, SentenceTree("A | B").root)
+
+
+    # Test 9: Conjunctive contraction with an unrelated belief
+    print("\n" + "=" * 60)
+    print("TEST 9: Conjunctive contraction, phi = A & B")
+    print("(Unrelated belief C should survive contraction)")
+    print("=" * 60)
+    kb9 = KB()
+    kb9.add(SentenceTree("A").root, priority=5)
+    kb9.add(SentenceTree("B").root, priority=5)
+    kb9.add(SentenceTree("C").root, priority=5)
+    run_postulates(kb9, SentenceTree("A & B").root, SentenceTree("B & A").root)
+
+
+    print("\nTesting complete :-)")
