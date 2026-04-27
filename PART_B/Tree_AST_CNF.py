@@ -16,7 +16,8 @@ def tokenize(s):
             tokens.append('<=>')
             i += 3
 
-        elif s[i] == '=' and s[i+1] == '>': # if it's an implication
+        #elif s[i] == '=' and s[i+1] == '>': # if it's an implication
+        elif s[i] == '=' and i + 1 < len(s) and s[i+1] == '>': # if it's an implication
             tokens.append('=>')
             i += 2
 
@@ -37,16 +38,16 @@ def parse(tokens):
 
     # operator heirarchy: NOT > AND > OR > IF > IFF
     OPS = {
-        '~': (Sentence, 'NOT', 3), 
-        '&': (Sentence, 'AND', 2), 
-        '|': (Sentence, 'OR', 1),
-        '=>': (Sentence, 'IF', 0),
-        '<=>': (Sentence, 'IFF', -1)
+        '~': (Sentence, 'NOT', 3, 'right'), 
+        '&': (Sentence, 'AND', 2, 'left'), 
+        '|': (Sentence, 'OR', 1, 'left'),
+        '=>': (Sentence, 'IF', 0, 'right'),
+        '<=>': (Sentence, 'IFF', -1, 'left')
     }
 
     def apply_op():
         op_symbol = ops.pop()
-        cls, op_name, _ = OPS[op_symbol]
+        cls, op_name, _, _ = OPS[op_symbol]
 
         if op_symbol == '~':
             a = values.pop()
@@ -66,14 +67,21 @@ def parse(tokens):
         elif t in OPS:
             # pop operators from the stack while they have higher or equal precedence than the current operator
             while (
-                ops and ops[-1] in OPS and
-                OPS[ops[-1]][1] >= OPS[t][1]
+                ops and ops[-1] in OPS and # check if the top of the stack is an operator and ...
+                (
+                    OPS[ops[-1]][2] > OPS[t][2] or # higher precedence or ..
+                    (
+                        OPS[ops[-1]][2] == OPS[t][2] and
+                        OPS[t][3] == 'left' # equal precedence and left associative
+                    )
+                )
             ):
-                apply_op()
-            ops.append(t)
+                apply_op() # pop the operator and apply it to the top values on the stack
+
+            ops.append(t) # push the current operator onto the stack
 
         elif t == '(': 
-            ops.append(t)
+            ops.append(t) # push left parenthesis onto the stack   
 
         elif t == ')': 
             # pop operators from the stack until we find a left parenthesis
@@ -94,6 +102,16 @@ class Sentence:
     def __init__(self, op, args):
         self.op = op  # "AND", "OR", "NOT", etc.
         self.args = args
+
+    def __str__(self):
+        # Print formulas in functional form, e.g. AND(A, OR(B, C)).
+        rendered_args = []
+        for arg in self.args:
+            rendered_args.append(str(arg))
+        return f"{self.op}({', '.join(rendered_args)})"
+
+    def __repr__(self):
+        return self.__str__()
 
     def to_cnf(self):
         # DEBUGGING:
@@ -278,7 +296,17 @@ if __name__ == "__main__":
     print(tree3.root.args[0].args)  # ['A', 'B']
     print(tree3.root.args[1].op)  # AND
     print(tree3.root.args[1].args, "\n")  # ['C', 'D']
-"""
+
+    s4 = "~(A => (B | C))"
+    tree4 = SentenceTree(s4)
+    print(s4)
+    print(tree4.root.op)  # NOT
+    print(tree4.root.args[0].op)  # IF
+    print(tree4.root.args[0].args[0])  # 'A'
+    print(tree4.root.args[0].args[1].op)  # OR
+    print(tree4.root.args[0].args[1].args)  # ['B', 'C']
+
+
 """
 if __name__ == "__main__":
     # Test a complex case: ~(A => (B | C))
@@ -291,4 +319,3 @@ if __name__ == "__main__":
     # This should output: AND(A, AND(NOT(B), NOT(C))) 
     # (after De Morgan's and Double Negation)
     print(f"Final CNF: {cnf_result}")
-"""
