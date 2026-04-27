@@ -4,7 +4,7 @@ from Tree_AST_CNF import *
 
 @dataclass
 class BeliefEntry:
-    formula: object # as an SentenceTree().root
+    formula: object # as a SentenceTree().root
     priority: int
 
 
