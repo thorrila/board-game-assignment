@@ -18,7 +18,7 @@ def equal(kb1, kb2):
 
 
 def subset(kb1, kb2):
-    """kb1 is a subset of kb2 if everything kb1 entails, kb2 also entails.
+    """kb1 is a subset of kb2 if everything kb1 entails, kb2 also entails. ⊆. 
     Used to test inclusion postulate."""
     for entry in kb1.entries:
         if not kb2.entails(entry.formula):
@@ -43,7 +43,7 @@ def negate(phi):
     """Wrap phi in a NOT."""
     return Sentence("NOT", [phi])
 
-###### Contraction postulates ######
+###### Contraction postulates - excluding Closure, Conjunctive Inclusion and Conjuctive Overlap ######
 
 # 1
 def success_contraction(kb, phi):
@@ -112,7 +112,7 @@ def recovery_contraction(kb, phi):
         return False
 
 
-###### Revision postulates ######
+###### Revision postulates - excluding Closure, Superexpansion and Subexpansion ######
 
 # 1
 def success_revision(kb, phi):
@@ -191,19 +191,70 @@ def extensionality_revision(kb, phi, psi):
 ###### Test runner ######
 
 if __name__ == "__main__":
-    kb = KB()
-    kb.add(SentenceTree("A").root, priority=10)
-    kb.add(SentenceTree("A => B").root, priority=1)
 
-    print("Testing contraction postulates with phi = B:")
-    success_contraction(kb, SentenceTree("B").root)
-    inclusion_contraction(kb, SentenceTree("B").root)
-    vacuity_contraction(kb, SentenceTree("C").root)
-    recovery_contraction(kb, SentenceTree("B").root)
+    def run_postulates(kb, phi, psi=None):
+        """Run all postulates on a single (kb, phi) pair, optionally with psi for extensionality."""
+        print("\nKB contents:")
+        kb.show()
+        
+        print("\n--- Contraction ---")
+        success_contraction(kb, phi)
+        inclusion_contraction(kb, phi)
+        vacuity_contraction(kb, phi)
+        if psi is not None:
+            extensionality_contraction(kb, phi, psi)
+        recovery_contraction(kb, phi)
+        
+        print("\n--- Revision ---")
+        success_revision(kb, phi)
+        inclusion_revision(kb, phi)
+        vacuity_revision(kb, phi)
+        consistency_revision(kb, phi)
+        if psi is not None:
+            extensionality_revision(kb, phi, psi)
 
-    print("\nTesting revision postulates with phi = ~B:")
-    success_revision(kb, SentenceTree("~B").root)
-    inclusion_revision(kb, SentenceTree("~B").root)
-    consistency_revision(kb, SentenceTree("~B").root)
 
-    
+    # Test 1: Modus Ponens KB
+    print("=" * 60)
+    print("TEST 1: Modus Ponens KB, phi = B, psi = B & B")
+    print("=" * 60)
+    kb1 = KB()
+    kb1.add(SentenceTree("A").root, priority=10)
+    kb1.add(SentenceTree("A => B").root, priority=1)
+    run_postulates(kb1, SentenceTree("B").root, SentenceTree("B & B").root)
+
+
+    # Test 2: Disjunctive KB - Recovery should fail here
+    print("\n" + "=" * 60)
+    print("TEST 2: Disjunctive KB, phi = A | C")
+    print("(Recovery is expected to fail on this configuration)")
+    print("=" * 60)
+    kb2 = KB()
+    kb2.add(SentenceTree("A").root, priority=1)
+    kb2.add(SentenceTree("C").root, priority=1)
+    run_postulates(kb2, SentenceTree("A | C").root)
+
+
+    # Test 3: Empty KB edge case
+    print("\n" + "=" * 60)
+    print("TEST 3: Empty KB, phi = A")
+    print("=" * 60)
+    kb3 = KB()
+    run_postulates(kb3, SentenceTree("A").root)
+
+
+    # Test 4: Larger KB with priority gradient
+    print("\n" + "=" * 60)
+    print("TEST 4: Larger KB with priority gradient, phi = ~Q")
+    print("=" * 60)
+    kb4 = KB()
+    kb4.add(SentenceTree("P").root, priority=10)
+    kb4.add(SentenceTree("P => Q").root, priority=5)
+    kb4.add(SentenceTree("Q => R").root, priority=3)
+    kb4.add(SentenceTree("R => S").root, priority=1)
+    run_postulates(kb4, SentenceTree("~Q").root, SentenceTree("~(Q | Q)").root)
+
+
+    print("\n" + "=" * 60)
+    print("ALL TESTS COMPLETE")
+    print("=" * 60)
