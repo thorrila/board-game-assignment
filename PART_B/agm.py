@@ -1,7 +1,3 @@
-# Todo: import relevant modules
-# Todo: re-write all functions
-# Todo: Finish the consistency revision postulate
-
 from BeliefBase import KB, revise
 from Tree_AST_CNF import SentenceTree, Sentence
 
