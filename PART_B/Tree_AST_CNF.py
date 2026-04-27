@@ -138,6 +138,10 @@ class Sentence:
         """
         # Ensure the tree is in CNF
         cnf_tree = self.to_cnf()
+
+        # For agm.py: if the simplified result is a plain string, wrap it as a single-literal clause
+        if isinstance(cnf_tree, str):
+            return [{cnf_tree}]
         
         # Handle the different possible root operators of a CNF tree
         if cnf_tree.op == "AND":
