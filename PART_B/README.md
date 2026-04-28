@@ -120,5 +120,3 @@ The checks are *empirical* — KB equality and subset are approximated by mutual
 | 7 | Priority-driven revision              | High-priority `A` survives, low-priority `B` displaced by `~B`|
 | 8 | Disjunctive input forcing change      | KB has `~A`, `~B`; revising by `A \| B` requires real change  |
 | 9 | Conjunctive contraction               | Unrelated belief `C` should survive contracting `A & B`       |
-
-Tests 5 and 6 are the most informative for extensionality, since they pair logically equivalent but syntactically distinct inputs.
