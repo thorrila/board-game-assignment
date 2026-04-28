@@ -13,7 +13,7 @@ The system maintains a prioritized belief base, supports logical entailment via 
 └── agm.py            # AGM postulate tests
 ```
 
-The pipeline runs bottom-up: `Tree_AST_CNF` provides parsing and CNF conversion, `BeliefBase` builds the prioritized belief base and the resolution-based entailment check on top of it, and `agm.py` exercises the whole stack against the postulates.
+`Tree_AST_CNF` provides parsing and CNF conversion, `BeliefBase` builds the prioritized belief base and the resolution-based entailment check on top of it, and `agm.py` exercises the whole stack against the postulates.
 
 ## Running
 
@@ -49,7 +49,7 @@ Formulas are written as infix strings and parsed by `SentenceTree`. Variables ar
 
 Parentheses override precedence in the usual way. Examples: `A => B`, `~(A & B)`, `(A | B) & ~C`, `A <=> B`.
 
-## Stage 1 — Belief Base
+## Belief Base
 
 Implemented in `BeliefBase.py` as the `KB` class. Each entry is a `BeliefEntry(formula, priority)` where `formula` is the root of a parsed AST and `priority` is an integer (higher = more entrenched). Higher-priority beliefs are preferred during contraction.
 
@@ -65,7 +65,7 @@ Public methods:
 - `formulas()` — returns the underlying list of formulas
 - `entries` — list of `BeliefEntry` records
 
-## Stage 2 — Entailment by Resolution
+## Entailment by Resolution
 
 Entailment is implemented from scratch (no external SAT or theorem-proving libraries) in three layers:
 
@@ -75,7 +75,7 @@ Entailment is implemented from scratch (no external SAT or theorem-proving libra
 
 `KB.entails(phi)` is just `resolution(self.formulas(), phi)`.
 
-## Stage 3 — Contraction (priority-based partial meet)
+## Contraction (priority-based partial meet)
 
 `KB.contraction(phi)` follows a priority-ordered partial-meet strategy:
 
@@ -86,7 +86,7 @@ Entailment is implemented from scratch (no external SAT or theorem-proving libra
 
 This biases removal toward low-priority beliefs while still producing a φ-free result in cases where multiple beliefs jointly entail φ.
 
-## Stage 4 — Expansion and Revision
+## Expansion and Revision
 
 **Expansion** (`KB.expand`) simply appends the new formula at the given priority — no consistency check is performed, matching the AGM definition of `B + φ`.
 
@@ -96,7 +96,7 @@ This biases removal toward low-priority beliefs while still producing a φ-free 
 
 That is: contract by the negation of the input, then expand by the input. This is the standard AGM construction connecting contraction and revision.
 
-## AGM Postulate Tests (`agm.py`)
+## AGM Postulate Tests
 
 The test harness checks the following postulates:
 
@@ -122,14 +122,3 @@ The checks are *empirical* — KB equality and subset are approximated by mutual
 | 9 | Conjunctive contraction               | Unrelated belief `C` should survive contracting `A & B`       |
 
 Tests 5 and 6 are the most informative for extensionality, since they pair logically equivalent but syntactically distinct inputs.
-
-## Known Limitations
-
-- **Variable names are single alphabetic characters.** The tokenizer reads one alphabetic character at a time, so multi-letter atoms are not supported.
-- **Recovery may fail** on partial-meet contraction (this is a known property of the construction, not a bug — Test 2 illustrates it).
-- **Resolution is complete but not optimized.** No subsumption or unit-preference heuristics are used; clause sets grow until saturation. Fine for small KBs and the test suite.
-- `is_consistent` uses entailment of a fresh sentinel symbol (`__contradiction__`) as its inconsistency check — this works because an inconsistent KB entails everything.
-
-## Authors
-
-Group submission for 02180 Introduction to AI, SP25 (DTU), assignment 2.
