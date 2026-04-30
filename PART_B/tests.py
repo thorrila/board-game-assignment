@@ -15,6 +15,7 @@ if __name__ == "__main__":
         vacuity_contraction(kb, phi)
         if psi is not None:
             extensionality_contraction(kb, phi, psi)
+        recovery_contraction(kb, phi)
         
         print("\n--- Revision ---")
         success_revision(kb, phi)
@@ -25,7 +26,7 @@ if __name__ == "__main__":
             extensionality_revision(kb, phi, psi)
 
 
-    # Test 1: Modus Ponens KB
+    # Test case 1: Modus Ponens KB
     print("=" * 60)
     print("TEST 1: Modus Ponens KB, phi = B, psi = B & B")
     print("=" * 60)
@@ -34,7 +35,7 @@ if __name__ == "__main__":
     kb1.add(SentenceTree("A => B").root, priority=1)
     run_postulates(kb1, SentenceTree("B").root, SentenceTree("B & B").root)
 
-    # Test 2: Empty KB edge case
+    # Test case 2: Empty KB edge case
     print("\n" + "=" * 60)
     print("TEST 2: Empty KB, phi = A")
     print("=" * 60)
@@ -42,7 +43,7 @@ if __name__ == "__main__":
     run_postulates(kb2, SentenceTree("A").root)
 
 
-    # Test 3: Larger KB with priority gradient
+    # Test case 3: Larger KB with priority gradient
     print("\n" + "=" * 60)
     print("TEST 3: Larger KB with priority gradient, phi = ~Q")
     print("=" * 60)
@@ -54,7 +55,7 @@ if __name__ == "__main__":
     run_postulates(kb3, SentenceTree("~Q").root, SentenceTree("~(Q | Q)").root)
 
 
-        # Test 4: De Morgan
+    # Test case 4: De Morgan
     print("\n" + "=" * 60)
     print("TEST 4: De Morgan extensionality, phi = ~(A & B), psi = ~A | ~B")
     print("(phi and psi are logically equivalent but syntactically different)")
@@ -65,7 +66,7 @@ if __name__ == "__main__":
     run_postulates(kb4, SentenceTree("~(A & B)").root, SentenceTree("~A | ~B").root)
 
 
-    # Test 5: Material implication extensionality
+    # Test case 5: Material implication extensionality
     print("\n" + "=" * 60)
     print("TEST 5: Material implication extensionality, phi = A => B, psi = ~A | B")
     print("=" * 60)
@@ -75,7 +76,7 @@ if __name__ == "__main__":
     run_postulates(kb5, SentenceTree("A => B").root, SentenceTree("~A | B").root)
 
 
-    # Test 6: Revision by a formula that conflicts with low-priority belief
+    # Test case 6: Revision by a formula that conflicts with low-priority belief
     print("\n" + "=" * 60)
     print("TEST 6: Priority gradient revision, phi = ~B")
     print("(High-priority A should survive, low-priority B should be displaced)")
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     run_postulates(kb6, SentenceTree("~B").root)
 
 
-    # Test 7: Disjunctive input where neither disjunct is in KB
+    # Test case 7: Disjunctive input where neither disjunct is in KB
     print("\n" + "=" * 60)
     print("TEST 7: Disjunctive input, phi = A | B")
     print("(KB contains ~A and ~B, so revising by A | B forces a real change)")
@@ -97,7 +98,7 @@ if __name__ == "__main__":
     run_postulates(kb7, SentenceTree("A | B").root)
 
 
-    # Test 8: Conjunctive contraction with an unrelated belief
+    # Test case 8: Conjunctive contraction with an unrelated belief
     print("\n" + "=" * 60)
     print("TEST 8: Conjunctive contraction, phi = A & B")
     print("(Unrelated belief C should survive contraction)")
@@ -107,6 +108,16 @@ if __name__ == "__main__":
     kb8.add(SentenceTree("B").root, priority=5)
     kb8.add(SentenceTree("C").root, priority=5)
     run_postulates(kb8, SentenceTree("A & B").root, SentenceTree("B & A").root)
+
+    # Test case 9: Disjunctive KB. Recovery is expected to fail here
+    print("\n" + "=" * 60)
+    print("TEST 9: Disjunctive KB, phi = A | C")
+    print("(Recovery is expected to fail on this configuration)")
+    print("=" * 60)
+    kb9 = KB()
+    kb9.add(SentenceTree("A").root, priority=1)
+    kb9.add(SentenceTree("C").root, priority=1)
+    run_postulates(kb9, SentenceTree("A | C").root)
 
 
     print("\nTesting complete :-)")

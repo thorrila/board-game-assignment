@@ -99,6 +99,19 @@ def extensionality_contraction(kb, phi, psi):
     print("extensionality postulate satisfied (precondition not met)")
     return True
 
+# 5
+def recovery_contraction(kb, phi):
+    """If you contract by phi and then add phi back, you recover the original."""
+    contracted = kb.contraction(phi)
+    contracted.expand(phi)
+    if subset(kb, contracted):
+        print("recovery postulate satisfied")
+        return True
+    else:
+        print("recovery postulate not satisfied")
+        return False
+
+
 
 ###### Revision postulates ######
 
@@ -148,7 +161,7 @@ def consistency_revision(kb, phi):
     """B * phi is consistent if phi is consistent (i.e., not a contradiction)."""
     # phi is consistent iff NOT(phi) is not valid
     if is_valid(negate(phi)):
-        # phi itself is a contradiction. no consistency required
+        # phi itself is a contradiction no consistency required
         print("consistency postulate satisfied (precondition not met)")
         return True
     

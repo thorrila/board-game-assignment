@@ -11,7 +11,7 @@ PART_B
 ├── BeliefBase.py     # KB class, resolution, contraction, revision
 ├── cli.py            # Interactive CLI to create KBs and check AGM postulates
 ├── postulates.py     # Defines AGM postulates 
-├── tests.py          # 8 fixed test cases
+├── tests.py          # 9 fixed test cases
 ├── README.md         # This file
 └── Tree_AST_CNF.py   # Tokenizer, parser, AST, and CNF conversion
 ```
@@ -34,7 +34,7 @@ Inspect parsing and CNF conversion on a single formula:
 python Tree_AST_CNF.py
 ```
 
-Run the 8 AGM postulate test cases:
+Run the 9 AGM postulate test cases:
 
 ```bash
 python tests.py
@@ -109,7 +109,7 @@ That is: contract by the negation of the input, then expand by the input. This i
 
 ## AGM Postulates
 
-- **Contraction postulates**: Success, Inclusion, Vacuity, Extensionality
+- **Contraction postulates**: Success, Inclusion, Vacuity, Extensionality, Recovery
 
 - **Revision postulates**: Success, Inclusion, Vacuity, Consistency, Extensionality
 
@@ -129,3 +129,4 @@ Summary of the test cases inside `tests.py`
 | 6 | Priority-driven revision              | High-priority `A` survives, low-priority `B` displaced by `~B`|
 | 7 | Disjunctive input forcing change      | KB has `~A`, `~B`; revising by `A \| B` requires real change  |
 | 8 | Conjunctive contraction               | Unrelated belief `C` should survive contracting `A & B`       |
+| 9 | Disjunctive KB                        | Recovery is expected to fail, demonstrates greedy contraction limitation |

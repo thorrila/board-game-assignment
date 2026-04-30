@@ -21,7 +21,7 @@ Examples:  A,  ~A,  A => B,  (A | B) & ~C,  A <=> B
 from BeliefBase import KB, revise
 from Tree_AST_CNF import SentenceTree
 from postulates import (
-    success_contraction, inclusion_contraction, vacuity_contraction,
+    success_contraction, inclusion_contraction, vacuity_contraction, recovery_contraction,
     extensionality_contraction, success_revision, inclusion_revision, vacuity_revision,
     consistency_revision, extensionality_revision,
 )
@@ -128,6 +128,7 @@ def cmd_postulates(kb, rest):
     vacuity_contraction(kb, phi)
     if psi is not None:
         extensionality_contraction(kb, phi, psi)
+    recovery_contraction(kb, phi)
 
     print("\n--- Revision ---")
     success_revision(kb, phi)
