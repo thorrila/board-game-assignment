@@ -1,40 +1,49 @@
 # Belief Revision Engine
 
-A belief revision engine, built for the **02180 Introduction to AI** course assignment at DTU.
-
-The system maintains a prioritized knowledge base, supports logical entailment via resolution, and implements expansion, partial-meet contraction, and revision (via the Levi identity). Includes tests that verifies the implementation against the AGM postulates. Includes a CLI interface for custom knowledge bases and AGM postulate checks.
+Belief revision engine for the **02180 Introduction to AI** course at DTU.
+Implements a prioritized belief base with resolution-based entailment, AGM 
+expansion, priority-based contraction, and revision via the Levi identity.
 
 ## File structure
 
 ```
 PART_B
-├── agm.py            # AGM postulates
 ├── BeliefBase.py     # KB class, resolution, contraction, revision
+├── cli.py            # Interactive CLI to create KBs and check AGM postulates
+├── postulates.py     # Defines AGM postulates 
+├── tests.py          # 8 fixed test cases
 ├── README.md         # This file
-├── tests.py          # Tests for AGM postulates
 └── Tree_AST_CNF.py   # Tokenizer, parser, AST, and CNF conversion
 ```
 
-`Tree_AST_CNF` provides parsing and CNF conversion, `BeliefBase` builds the prioritized belief base and the resolution-based entailment check on top of it, and `agm.py` exercises the whole stack against the postulates.
+`Tree_AST_CNF` provides parsing and CNF conversion, `BeliefBase` builds the prioritized belief base and the resolution-based entailment check on top of it, `cli.py` provides a CLI interface for custom knowledge bases and AGM postulate checks, and `tests.py` exercises the whole stack against the postulates.
 
-## Running (todo)
+## Running
 
-The project is pure Python with no external dependencies. To run the postulate tests:
+The project is pure Python with no external dependencies. All commands below assume you're in the `PART_B` directory.
 
-```bash
-python agm.py
-```
-
-To run the small standalone demo inside `BeliefBase.py`:
+Run a small demo inside `BeliefBase.py`:
 
 ```bash
 python BeliefBase.py
 ```
 
-To inspect parsing and CNF conversion on a single formula:
+Inspect parsing and CNF conversion on a single formula:
 
 ```bash
 python Tree_AST_CNF.py
+```
+
+Run the 8 AGM postulate test cases:
+
+```bash
+python tests.py
+```
+
+Launch the CLI for custom knowledge bases and AGM postulate checks:
+
+```bash
+python cli.py
 ```
 
 ## Formula Syntax
@@ -51,7 +60,7 @@ Formulas are written as infix strings and parsed by `SentenceTree`. Variables ar
 
 Parentheses override precedence in the usual way. Examples: `A => B`, `~(A & B)`, `(A | B) & ~C`, `A <=> B`.
 
-## Belief Base
+## Knowledge Base
 
 Implemented in `BeliefBase.py` as the `KB` class. Each entry is a `BeliefEntry(formula, priority)` where `formula` is the root of a parsed AST and `priority` is an integer (higher = more entrenched). Higher-priority beliefs are preferred during contraction.
 
@@ -77,16 +86,16 @@ Entailment is implemented from scratch (no external SAT or theorem-proving libra
 
 `KB.entails(phi)` is just `resolution(self.formulas(), phi)`.
 
-## Contraction (priority-based partial meet)
+## Contraction (priority-based greedy)
 
-`KB.contraction(phi)` follows a priority-ordered partial-meet strategy:
+`KB.contraction(phi)` follows a priority-ordered greedy strategy:
 
 1. If the KB doesn't entail φ, return a copy unchanged (vacuity).
 2. Otherwise, sort entries ascending by priority and try removing each one individually. If any single removal already breaks entailment of φ, return that result.
 3. If no single removal suffices, drop the lowest-priority entry permanently and repeat.
 4. Loop until φ is no longer entailed.
 
-This biases removal toward low-priority beliefs while still producing a φ-free result in cases where multiple beliefs jointly entail φ.
+This biases removal toward low-priority beliefs while still producing a φ-free result in cases where multiple beliefs jointly entail φ. 
 
 ## Expansion and Revision
 
@@ -98,28 +107,25 @@ This biases removal toward low-priority beliefs while still producing a φ-free 
 
 That is: contract by the negation of the input, then expand by the input. This is the standard AGM construction connecting contraction and revision.
 
-## AGM Postulate Tests
+## AGM Postulates
 
-Our tests checks the following postulates:
+- **Contraction postulates**: Success, Inclusion, Vacuity, Extensionality
 
-**Contraction**: Success, Inclusion, Vacuity, Extensionality, Recovery
-
-**Revision**: Success, Inclusion, Vacuity, Consistency, Extensionality
-
-Per the assignment brief, Closure, Conjunctive Inclusion, Conjunctive Overlap, Superexpansion, and Subexpansion are excluded.
+- **Revision postulates**: Success, Inclusion, Vacuity, Consistency, Extensionality
 
 Each postulate function prints `satisfied`, `not satisfied`, or `satisfied (precondition not met)` for the corresponding test.
 
-### Test Cases
+## Test Cases
+
+Summary of the test cases inside `tests.py`
 
 | # | Scenario                              | Notes                                                          |
 |---|---------------------------------------|----------------------------------------------------------------|
 | 1 | Modus ponens KB                       | φ = `B`, ψ = `B & B`                                           |
-| 2 | Disjunctive KB                        | φ = `A \| C` — Recovery is expected to fail here              |
-| 3 | Empty KB                              | Edge case; vacuity should hold trivially                       |
-| 4 | Four-formula priority gradient        | Stress test for prioritized contraction                        |
-| 5 | De Morgan extensionality              | φ = `~(A & B)`, ψ = `~A \| ~B`                                |
-| 6 | Material implication extensionality   | φ = `A => B`, ψ = `~A \| B`                                   |
-| 7 | Priority-driven revision              | High-priority `A` survives, low-priority `B` displaced by `~B`|
-| 8 | Disjunctive input forcing change      | KB has `~A`, `~B`; revising by `A \| B` requires real change  |
-| 9 | Conjunctive contraction               | Unrelated belief `C` should survive contracting `A & B`       |
+| 2 | Empty KB                              | Edge case; vacuity should hold trivially                       |
+| 3 | Four-formula priority gradient        | Stress test for prioritized contraction                        |
+| 4 | De Morgan extensionality              | φ = `~(A & B)`, ψ = `~A \| ~B`                                |
+| 5 | Material implication extensionality   | φ = `A => B`, ψ = `~A \| B`                                   |
+| 6 | Priority-driven revision              | High-priority `A` survives, low-priority `B` displaced by `~B`|
+| 7 | Disjunctive input forcing change      | KB has `~A`, `~B`; revising by `A \| B` requires real change  |
+| 8 | Conjunctive contraction               | Unrelated belief `C` should survive contracting `A & B`       |
