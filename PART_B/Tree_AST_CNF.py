@@ -1,8 +1,8 @@
 
 def tokenize(s):
+    # Tokenizer: converts a string like "A & B => C" into a list of tokens: ['A', '&', 'B', '=>', 'C']
     tokens = []
     i = 0
-
     while i < len(s):
         if s[i].isspace():
             i += 1
@@ -16,7 +16,6 @@ def tokenize(s):
             tokens.append('<=>')
             i += 3
 
-        #elif s[i] == '=' and s[i+1] == '>': # if it's an implication
         elif s[i] == '=' and i + 1 < len(s) and s[i+1] == '>': # if it's an implication
             tokens.append('=>')
             i += 2
@@ -264,8 +263,6 @@ class Sentence:
 
         return self
     
-
-
 
 class SentenceTree:
     def __init__(self, string):
